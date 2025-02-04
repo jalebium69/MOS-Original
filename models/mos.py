@@ -10,7 +10,7 @@ from utils.inc_net import MOSNet
 from models.base import BaseLearner
 from utils.toolkit import tensor2numpy, target2onehot
 from torch.distributions.multivariate_normal import MultivariateNormal
-
+import time
 
 # tune the model at first session with vpt, and then conduct simple shot.
 num_workers = 8
@@ -32,6 +32,7 @@ class Learner(BaseLearner):
         self.min_lr = args["min_lr"] if args["min_lr"] is not None else 1e-8
         self.args = args
         self.ensemble = args["ensemble"]
+        self.eval_cnn_times = []
 
         for n, p in self._network.backbone.named_parameters():
             if 'adapter' not in n and 'head' not in n:
@@ -355,6 +356,7 @@ class Learner(BaseLearner):
             # return 0.0
     
     def _eval_cnn(self, loader):
+        start_time = time.time()
         self._network.eval()
         y_pred, y_true = [], []
         orig_y_pred = []
@@ -411,5 +413,14 @@ class Learner(BaseLearner):
             y_true.append(targets.cpu().numpy())
 
         orig_acc = (np.concatenate(orig_y_pred) == np.concatenate(y_true)).sum() * 100 / len(np.concatenate(y_true))
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        
+        # Store execution time and calculate average
+        self.eval_cnn_times.append(elapsed_time)
+        avg_time = sum(self.eval_cnn_times) / len(self.eval_cnn_times)
+
+        print(f"Time taken for _eval_cnn: {elapsed_time:.4f} seconds")
+        print(f"Average time for _eval_cnn calls: {avg_time:.4f} seconds")
         logging.info("the accuracy of the original model:{}".format(np.around(orig_acc, 2)))
         return np.concatenate(y_pred), np.concatenate(y_true)  # [N, topk]
