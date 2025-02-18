@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from utils.data import iCIFAR10, iCIFAR100, iImageNet100, iImageNet1000, iCIFAR224, iImageNetR,iImageNetA,CUB, objectnet, omnibenchmark, vtab
+from utils.data import iCIFAR10, iCIFAR100, iImageNet100, iImageNet1000, iCIFAR224, iImageNetR,iImageNetA,CUB, objectnet, omnibenchmark, vtab,iImageNetR_imbalanced, iCIFAR224_imbalanced,CUB_imbalanced, vtab_imbalanced
 
 
 class DataManager(object):
@@ -30,6 +30,24 @@ class DataManager(object):
     def nb_classes(self):
         return len(self._class_order)
 
+    @property
+    def class_frequencies(self):
+        """
+        Calculate the number of samples per class in the training dataset and return as a list.
+        """
+        if not hasattr(self, '_train_targets') or self._train_targets is None:
+            raise AttributeError("Training targets (_train_targets) are not initialized.")
+        
+        max_class = max(self._train_targets)  # Determine the maximum class label
+        class_counts = [0] * (max_class + 1)  # Create a list initialized to zeros for all classes
+    
+        for label in self._train_targets:  # Iterate over the training targets
+            class_counts[label] += 1
+    
+        return class_counts
+
+    
+            
     def get_dataset(
         self, indices, source, mode, appendent=None, ret_data=False, m_rate=None
     ):
@@ -225,18 +243,30 @@ def _get_idata(dataset_name, args=None):
         return iImageNet100()
     elif name == "cifar224":
         return iCIFAR224(args)
+    elif name == "cifar224_imbalanced":
+        return iCIFAR224_imbalanced(args)
     elif name == "imagenetr":
         return iImageNetR(args)
+    elif name=="imagenetr_imbalanced":
+        return iImageNetR_imbalanced(args)
     elif name == "imageneta":
         return iImageNetA()
     elif name == "cub":
         return CUB()
+    elif name == "cub_imbalanced":
+        return CUB_imbalanced(args)
+    elif name == "objectnet_imbalanced":
+        return objectnet_imbalanced()
     elif name == "objectnet":
         return objectnet()
     elif name == "omnibenchmark":
         return omnibenchmark()
+    elif name == "omnibenchmark_imbalanced":
+        return omnibenchmark_imbalanced()
     elif name == "vtab":
         return vtab()
+    elif name == "vtab_imbalanced":
+        return vtab_imbalanced()
 
     else:
         raise NotImplementedError("Unknown dataset {}.".format(dataset_name))
