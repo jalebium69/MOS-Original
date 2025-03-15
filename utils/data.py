@@ -707,7 +707,7 @@ class vtab(iData):
 
 
 class vtab_imbalanced(iData):
-    def __init__(self, args, imbalance_ratio=0.25, imbalance_classes=None):
+    def __init__(self, args, imbalance_ratio=0.1, imbalance_classes=None):
         super().__init__()
         self.args = args
         self.use_path = True
@@ -744,7 +744,7 @@ class vtab_imbalanced(iData):
         if self.imbalance_classes is None:
             # Select a subset of classes to imbalance
             num_classes = len(set(self.train_targets))
-            num_imbalance_classes = num_classes // 4  # Example: Imbalance 25% of classes
+            num_imbalance_classes = num_classes // 2  # Example: Imbalance 25% of classes
             self.imbalance_classes = np.random.choice(
                 np.arange(num_classes), num_imbalance_classes, replace=False
             )
